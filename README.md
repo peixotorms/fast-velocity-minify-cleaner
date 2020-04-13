@@ -3,7 +3,7 @@ This will completely delete the Fast Velocity Minify plugin, cronjobs, plugin se
 
 ## Usage
 
-To **delete everything** including the plugin (default directory), run:
+To **delete everything** including the plugin itself (default directory) and plugin settings, run:
 ```
 https://yoursite.com/?fvm_cleaner=1
 ```

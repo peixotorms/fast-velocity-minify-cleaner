@@ -39,7 +39,10 @@ if(!is_admin()) {
 
 function fvm_cleaner(){
     if(isset($_GET['fvm_cleaner']) && is_numeric($_GET['fvm_cleaner'])) {
-		
+	    	
+	    	# purge all caches
+	    	fvm_cleaner_purge_caches();
+	    
 		# what to do
 		$level = filter_var($_GET['fvm_cleaner'], FILTER_SANITIZE_NUMBER_INT);
 		
@@ -141,6 +144,9 @@ function fvm_cleaner(){
 				
 			}
 		}
+	
+		# purge all caches
+	    	fvm_cleaner_purge_caches();
 		
 		# stop here
 		echo "All done!<br />";
@@ -168,5 +174,162 @@ function fvm_cleaner_rrmdir($path) {
 		# self
 		if(is_dir($path)) { rmdir($path); }
 	}
+}
+
+
+# purge supported hosting and plugins
+function fvm_cleaner_purge_caches(){
+	
+# third party plugins
+	
+# Purge all W3 Total Cache
+if (function_exists('w3tc_pgcache_flush')) {
+	w3tc_pgcache_flush();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>W3 Total Cache</strong> have been purged.</p></div>');
+}
+
+# Purge WP Super Cache
+if (function_exists('wp_cache_clear_cache')) {
+	wp_cache_clear_cache();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>WP Super Cache</strong> have been purged.</p></div>');
+}
+
+# Purge WP Rocket
+if (function_exists('rocket_clean_domain')) {
+	rocket_clean_domain();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>WP Rocket</strong> have been purged.</p></div>');
+}
+
+# Purge Cachify
+if (function_exists('cachify_flush_cache')) {
+	cachify_flush_cache();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>Cachify</strong> have been purged.</p></div>');
+}
+
+# Purge Comet Cache
+if ( class_exists("comet_cache") ) {
+	comet_cache::clear();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>Comet Cache</strong> have been purged.</p></div>');
+}
+
+# Purge Zen Cache
+if ( class_exists("zencache") ) {
+	zencache::clear();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>Comet Cache</strong> have been purged.</p></div>');
+}
+
+# Purge LiteSpeed Cache 
+if (class_exists('LiteSpeed_Cache_Tags')) {
+	LiteSpeed_Cache_Tags::add_purge_tag('*');
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>LiteSpeed Cache</strong> have been purged.</p></div>');
+}
+
+# Purge Hyper Cache
+if (class_exists( 'HyperCache' )) {
+    do_action( 'autoptimize_action_cachepurged' );
+    return __( '<div class="notice notice-info is-dismissible"><p>All caches on <strong>HyperCache</strong> have been purged.</p></div>');
+}
+
+# purge cache enabler
+if ( has_action('ce_clear_cache') ) {
+    do_action('ce_clear_cache');
+	return __( '<div class="notice notice-info is-dismissible"><p>All caches on <strong>Cache Enabler</strong> have been purged.</p></div>');
+}
+
+# purge wpfc
+if (function_exists('wpfc_clear_all_cache')) {
+	wpfc_clear_all_cache(true);
+}
+
+# add breeze cache purge support
+if (class_exists("Breeze_PurgeCache")) {
+	Breeze_PurgeCache::breeze_cache_flush();
+	return __( '<div class="notice notice-info is-dismissible"><p>All caches on <strong>Breeze</strong> have been purged.</p></div>');
+}
+
+
+# swift
+if (class_exists("Swift_Performance_Cache")) {
+	Swift_Performance_Cache::clear_all_cache();
+	return __( '<div class="notice notice-info is-dismissible"><p>All caches on <strong>Swift Performance</strong> have been purged.</p></div>');
+}
+
+
+# hosting companies
+
+# Purge SG Optimizer (Siteground)
+if (function_exists('sg_cachepress_purge_cache')) {
+	sg_cachepress_purge_cache();
+	return __('<div class="notice notice-info is-dismissible"><p>All caches on <strong>SG Optimizer</strong> have been purged.</p></div>');
+}
+
+# Purge Godaddy Managed WordPress Hosting (Varnish + APC)
+if (class_exists('WPaaS\Plugin') && method_exists( 'WPass\Plugin', 'vip' )) {
+	fastvelocity_godaddy_request('BAN');
+	return __('<div class="notice notice-info is-dismissible"><p>A cache purge request has been sent to <strong>Go Daddy Varnish</strong></p></div>');
+}
+
+
+# Purge WP Engine
+if (class_exists("WpeCommon")) {
+	if (method_exists('WpeCommon', 'purge_memcached')) { WpeCommon::purge_memcached(); }
+	if (method_exists('WpeCommon', 'purge_varnish_cache')) { WpeCommon::purge_varnish_cache(); }
+
+	if (method_exists('WpeCommon', 'purge_memcached') || method_exists('WpeCommon', 'purge_varnish_cache')) {
+		return __('<div class="notice notice-info is-dismissible"><p>A cache purge request has been sent to <strong>WP Engine</strong></p></div>');
+	}
+}
+
+
+# Purge Kinsta
+global $kinsta_cache;
+if ( isset($kinsta_cache) && class_exists('\\Kinsta\\CDN_Enabler')) {
+	if (!empty( $kinsta_cache->kinsta_cache_purge)){
+		$kinsta_cache->kinsta_cache_purge->purge_complete_caches();
+		return __('<div class="notice notice-info is-dismissible"><p>A cache purge request has been sent to <strong>Kinsta</strong></p></div>');
+	}
+}
+
+# Purge Pagely
+if ( class_exists( 'PagelyCachePurge' ) ) {
+	$purge_pagely = new PagelyCachePurge();
+	$purge_pagely->purgeAll();
+	return __('<div class="notice notice-info is-dismissible"><p>A cache purge request has been sent to <strong>Pagely</strong></p></div>');
+}
+
+# Purge Pressidum
+if (defined('WP_NINUKIS_WP_NAME') && class_exists('Ninukis_Plugin')){
+	$purge_pressidum = Ninukis_Plugin::get_instance();
+	$purge_pressidum->purgeAllCaches();
+	return __('<div class="notice notice-info is-dismissible"><p>A cache purge request has been sent to <strong>Pressidium</strong></p></div>');
+}
+
+# Purge Savvii
+if (defined( '\Savvii\CacheFlusherPlugin::NAME_DOMAINFLUSH_NOW')) {
+	$purge_savvii = new \Savvii\CacheFlusherPlugin();
+	if ( method_exists( $plugin, 'domainflush' ) ) {
+		$purge_savvii->domainflush();
+		return __('<div class="notice notice-info is-dismissible"><p>A cache purge request has been sent to <strong>Savvii</strong></p></div>');
+	}
+}
+
+# Purge Pantheon Advanced Page Cache plugin
+if(function_exists('pantheon_wp_clear_edge_all')) {
+	pantheon_wp_clear_edge_all();
+}
+
+# last actions, php and wordpress in this order
+
+# flush opcache if available
+if(function_exists('opcache_reset')) {
+	opcache_reset();
+	return __( '<div class="notice notice-info is-dismissible"><p>All caches on <strong>OPCache</strong> have been purged.</p></div>'
+}
+
+# wordpress default cache
+if (function_exists('wp_cache_flush')) {
+	wp_cache_flush();
+}
+
 }
 
